@@ -1,8 +1,9 @@
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
+  index,
   integer,
-  numeric,
   pgEnum,
   pgTable,
   primaryKey,
@@ -10,6 +11,7 @@ import {
   timestamp,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
+import { money } from './columns';
 
 export const userRoleEnum = pgEnum('user_role', ['admin', 'client']);
 export const projectStatusEnum = pgEnum('project_status', [
@@ -68,7 +70,7 @@ export const reminderRepeatEnum = pgEnum('reminder_repeat', [
   'weekly',
   'monthly',
 ]);
-export const reminderEntityTypeEnum = pgEnum('reminder_entity', [
+export const reminderEntityEnum = pgEnum('reminder_entity', [
   'client',
   'project',
   'task',
@@ -77,7 +79,7 @@ export const reminderEntityTypeEnum = pgEnum('reminder_entity', [
   'milestone',
   'none',
 ]);
-export const noteEntityTypeEnum = pgEnum('note_entity', [
+export const noteEntityEnum = pgEnum('note_entity', [
   'client',
   'project',
   'task',
@@ -174,7 +176,7 @@ export const negotiations = pgTable('negotiations', {
     .$defaultFn(() => crypto.randomUUID()),
   title: text('title').notNull(),
   description: text('description'),
-  amount: numeric('amount', { precision: 12, scale: 2 }).$type<number>(),
+  amount: money('amount'),
   currency: text('currency').notNull(),
   status: negotiationStatusEnum('status').notNull().default('open'),
   clientId: text('clientId').references(() => clients.id, {
@@ -204,7 +206,7 @@ export const projects = pgTable('projects', {
   startDate: timestamp('startDate', { mode: 'date' }),
   endDate: timestamp('endDate', { mode: 'date' }),
   budgetCurrency: text('budgetCurrency'),
-  budgetAmount: numeric('budgetAmount', { precision: 12, scale: 2 }).$type<number>(),
+  budgetAmount: money('budgetAmount'),
   createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updatedAt', { mode: 'date' })
     .notNull()
@@ -212,151 +214,191 @@ export const projects = pgTable('projects', {
     .$onUpdate(() => new Date()),
 });
 
-export const milestones = pgTable('milestones', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  projectId: text('projectId')
-    .notNull()
-    .references(() => projects.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  description: text('description'),
-  status: milestoneStatusEnum('status').notNull().default('planned'),
-  dueDate: timestamp('dueDate', { mode: 'date' }),
-  paymentId: text('paymentId').references((): AnyPgColumn => payments.id, {
-    onDelete: 'set null',
-  }),
-  createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { mode: 'date' })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+export const milestones = pgTable(
+  'milestones',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    projectId: text('projectId')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    description: text('description'),
+    status: milestoneStatusEnum('status').notNull().default('planned'),
+    dueDate: timestamp('dueDate', { mode: 'date' }),
+    paymentId: text('paymentId').references((): AnyPgColumn => payments.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt', { mode: 'date' })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [index('milestones_project_idx').on(table.projectId)],
+);
 
-export const epics = pgTable('epics', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  projectId: text('projectId')
-    .notNull()
-    .references(() => projects.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  description: text('description'),
-  status: epicStatusEnum('status').notNull().default('planned'),
-  createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { mode: 'date' })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+export const epics = pgTable(
+  'epics',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    projectId: text('projectId')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    description: text('description'),
+    status: epicStatusEnum('status').notNull().default('planned'),
+    createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt', { mode: 'date' })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [index('epics_project_idx').on(table.projectId)],
+);
 
-export const tasks = pgTable('tasks', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  title: text('title').notNull(),
-  description: text('description'),
-  status: taskStatusEnum('status').notNull().default('todo'),
-  priority: taskPriorityEnum('priority').notNull().default('medium'),
-  dueDate: timestamp('dueDate', { mode: 'date' }),
-  epicId: text('epicId').references(() => epics.id, { onDelete: 'cascade' }),
-  projectId: text('projectId')
-    .notNull()
-    .references(() => projects.id, { onDelete: 'cascade' }),
-  createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { mode: 'date' })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+export const tasks = pgTable(
+  'tasks',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    title: text('title').notNull(),
+    description: text('description'),
+    status: taskStatusEnum('status').notNull().default('todo'),
+    priority: taskPriorityEnum('priority').notNull().default('medium'),
+    dueDate: timestamp('dueDate', { mode: 'date' }),
+    epicId: text('epicId').references(() => epics.id, { onDelete: 'cascade' }),
+    projectId: text('projectId')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt', { mode: 'date' })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index('tasks_project_idx').on(table.projectId),
+    index('tasks_epic_idx').on(table.epicId),
+    index('tasks_status_idx').on(table.status),
+  ],
+);
 
-export const payments = pgTable('payments', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  clientId: text('clientId').references(() => clients.id, {
-    onDelete: 'set null',
-  }),
-  projectId: text('projectId').references(() => projects.id, {
-    onDelete: 'set null',
-  }),
-  milestoneId: text('milestoneId').references((): AnyPgColumn => milestones.id, {
-    onDelete: 'set null',
-  }),
-  amount: numeric('amount', { precision: 12, scale: 2 })
-    .notNull()
-    .$type<number>(),
-  currency: text('currency').notNull(),
-  status: paymentStatusEnum('status').notNull().default('pending'),
-  receivedDate: timestamp('receivedDate', { mode: 'date' }),
-  dueDate: timestamp('dueDate', { mode: 'date' }),
-  description: text('description'),
-  createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { mode: 'date' })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+export const payments = pgTable(
+  'payments',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    clientId: text('clientId').references(() => clients.id, {
+      onDelete: 'set null',
+    }),
+    projectId: text('projectId').references(() => projects.id, {
+      onDelete: 'set null',
+    }),
+    amount: money('amount').notNull(),
+    currency: text('currency').notNull(),
+    status: paymentStatusEnum('status').notNull().default('pending'),
+    receivedDate: timestamp('receivedDate', { mode: 'date' }),
+    dueDate: timestamp('dueDate', { mode: 'date' }),
+    description: text('description'),
+    createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt', { mode: 'date' })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index('payments_client_idx').on(table.clientId),
+    index('payments_project_idx').on(table.projectId),
+    index('payments_status_idx').on(table.status),
+  ],
+);
 
-export const expenses = pgTable('expenses', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  clientId: text('clientId').references(() => clients.id, {
-    onDelete: 'set null',
-  }),
-  projectId: text('projectId').references(() => projects.id, {
-    onDelete: 'set null',
-  }),
-  category: expenseCategoryEnum('category').notNull(),
-  amount: numeric('amount', { precision: 12, scale: 2 })
-    .notNull()
-    .$type<number>(),
-  currency: text('currency').notNull(),
-  date: timestamp('date', { mode: 'date' }).notNull(),
-  recurring: boolean('recurring').notNull().default(false),
-  recurringFrequency: expenseFrequencyEnum('recurringFrequency'),
-  description: text('description'),
-  createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { mode: 'date' })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+export const expenses = pgTable(
+  'expenses',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    clientId: text('clientId').references(() => clients.id, {
+      onDelete: 'set null',
+    }),
+    projectId: text('projectId').references(() => projects.id, {
+      onDelete: 'set null',
+    }),
+    category: expenseCategoryEnum('category').notNull(),
+    amount: money('amount').notNull(),
+    currency: text('currency').notNull(),
+    date: timestamp('date', { mode: 'date' }).notNull(),
+    recurring: boolean('recurring').notNull().default(false),
+    recurringFrequency: expenseFrequencyEnum('recurringFrequency'),
+    description: text('description'),
+    createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt', { mode: 'date' })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index('expenses_client_idx').on(table.clientId),
+    index('expenses_project_idx').on(table.projectId),
+    index('expenses_category_idx').on(table.category),
+    check(
+      'expenses_recurring_requires_frequency',
+      sql`NOT ${table.recurring} OR ${table.recurringFrequency} IS NOT NULL`,
+    ),
+  ],
+);
 
-export const reminders = pgTable('reminders', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  title: text('title').notNull(),
-  notes: text('notes'),
-  dueAt: timestamp('dueAt', { mode: 'date' }).notNull(),
-  status: reminderStatusEnum('status').notNull().default('pending'),
-  repeat: reminderRepeatEnum('repeat').notNull().default('once'),
-  entityType: reminderEntityTypeEnum('entityType').notNull().default('none'),
-  // Polymorphic link to any entity type: no FK by design; integrity enforced in server actions.
-  entityId: text('entityId'),
-  createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { mode: 'date' })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+export const reminders = pgTable(
+  'reminders',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    title: text('title').notNull(),
+    notes: text('notes'),
+    dueAt: timestamp('dueAt', { mode: 'date' }).notNull(),
+    status: reminderStatusEnum('status').notNull().default('pending'),
+    repeat: reminderRepeatEnum('repeat').notNull().default('once'),
+    entityType: reminderEntityEnum('entityType').notNull().default('none'),
+    // Polymorphic link to any entity type: no FK by design; integrity enforced in server actions.
+    entityId: text('entityId'),
+    createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt', { mode: 'date' })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index('reminders_entity_idx').on(table.entityType, table.entityId),
+    index('reminders_status_due_idx').on(table.status, table.dueAt),
+  ],
+);
 
-export const notes = pgTable('notes', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  body: text('body').notNull(),
-  entityType: noteEntityTypeEnum('entityType').notNull().default('none'),
-  // Polymorphic link to any entity type: no FK by design; integrity enforced in server actions.
-  entityId: text('entityId'),
-  createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { mode: 'date' })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+export const notes = pgTable(
+  'notes',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    body: text('body').notNull(),
+    entityType: noteEntityEnum('entityType').notNull().default('none'),
+    // Polymorphic link to any entity type: no FK by design; integrity enforced in server actions.
+    entityId: text('entityId'),
+    createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt', { mode: 'date' })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [index('notes_entity_idx').on(table.entityType, table.entityId)],
+);
 
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
@@ -432,10 +474,6 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   project: one(projects, {
     fields: [payments.projectId],
     references: [projects.id],
-  }),
-  milestone: one(milestones, {
-    fields: [payments.milestoneId],
-    references: [milestones.id],
   }),
 }));
 

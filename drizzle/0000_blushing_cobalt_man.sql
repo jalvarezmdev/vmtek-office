@@ -60,7 +60,8 @@ CREATE TABLE "expenses" (
 	"recurringFrequency" "expense_frequency",
 	"description" text,
 	"createdAt" timestamp DEFAULT now() NOT NULL,
-	"updatedAt" timestamp DEFAULT now() NOT NULL
+	"updatedAt" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "expenses_recurring_requires_frequency" CHECK (NOT "expenses"."recurring" OR "expenses"."recurringFrequency" IS NOT NULL)
 );
 --> statement-breakpoint
 CREATE TABLE "milestones" (
@@ -101,7 +102,6 @@ CREATE TABLE "payments" (
 	"id" text PRIMARY KEY NOT NULL,
 	"clientId" text,
 	"projectId" text,
-	"milestoneId" text,
 	"amount" numeric(12, 2) NOT NULL,
 	"currency" text NOT NULL,
 	"status" "payment_status" DEFAULT 'pending' NOT NULL,
@@ -188,9 +188,22 @@ ALTER TABLE "milestones" ADD CONSTRAINT "milestones_paymentId_payments_id_fk" FO
 ALTER TABLE "negotiations" ADD CONSTRAINT "negotiations_clientId_clients_id_fk" FOREIGN KEY ("clientId") REFERENCES "public"."clients"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payments" ADD CONSTRAINT "payments_clientId_clients_id_fk" FOREIGN KEY ("clientId") REFERENCES "public"."clients"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payments" ADD CONSTRAINT "payments_projectId_projects_id_fk" FOREIGN KEY ("projectId") REFERENCES "public"."projects"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "payments" ADD CONSTRAINT "payments_milestoneId_milestones_id_fk" FOREIGN KEY ("milestoneId") REFERENCES "public"."milestones"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "projects" ADD CONSTRAINT "projects_clientId_clients_id_fk" FOREIGN KEY ("clientId") REFERENCES "public"."clients"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "projects" ADD CONSTRAINT "projects_negotiationId_negotiations_id_fk" FOREIGN KEY ("negotiationId") REFERENCES "public"."negotiations"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_userId_users_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_epicId_epics_id_fk" FOREIGN KEY ("epicId") REFERENCES "public"."epics"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "tasks" ADD CONSTRAINT "tasks_projectId_projects_id_fk" FOREIGN KEY ("projectId") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_projectId_projects_id_fk" FOREIGN KEY ("projectId") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "epics_project_idx" ON "epics" USING btree ("projectId");--> statement-breakpoint
+CREATE INDEX "expenses_client_idx" ON "expenses" USING btree ("clientId");--> statement-breakpoint
+CREATE INDEX "expenses_project_idx" ON "expenses" USING btree ("projectId");--> statement-breakpoint
+CREATE INDEX "expenses_category_idx" ON "expenses" USING btree ("category");--> statement-breakpoint
+CREATE INDEX "milestones_project_idx" ON "milestones" USING btree ("projectId");--> statement-breakpoint
+CREATE INDEX "notes_entity_idx" ON "notes" USING btree ("entityType","entityId");--> statement-breakpoint
+CREATE INDEX "payments_client_idx" ON "payments" USING btree ("clientId");--> statement-breakpoint
+CREATE INDEX "payments_project_idx" ON "payments" USING btree ("projectId");--> statement-breakpoint
+CREATE INDEX "payments_status_idx" ON "payments" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "reminders_entity_idx" ON "reminders" USING btree ("entityType","entityId");--> statement-breakpoint
+CREATE INDEX "reminders_status_due_idx" ON "reminders" USING btree ("status","dueAt");--> statement-breakpoint
+CREATE INDEX "tasks_project_idx" ON "tasks" USING btree ("projectId");--> statement-breakpoint
+CREATE INDEX "tasks_epic_idx" ON "tasks" USING btree ("epicId");--> statement-breakpoint
+CREATE INDEX "tasks_status_idx" ON "tasks" USING btree ("status");

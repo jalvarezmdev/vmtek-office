@@ -1,5 +1,5 @@
 {
-  "id": "b8685a58-df46-455f-931e-2ffe69bf2274",
+  "id": "b462b97f-1fb0-45fa-8912-7d8443167cdb",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -219,7 +219,23 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "epics_project_idx": {
+          "name": "epics_project_idx",
+          "columns": [
+            {
+              "expression": "projectId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "epics_projectId_projects_id_fk": {
           "name": "epics_projectId_projects_id_fk",
@@ -323,7 +339,53 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "expenses_client_idx": {
+          "name": "expenses_client_idx",
+          "columns": [
+            {
+              "expression": "clientId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expenses_project_idx": {
+          "name": "expenses_project_idx",
+          "columns": [
+            {
+              "expression": "projectId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expenses_category_idx": {
+          "name": "expenses_category_idx",
+          "columns": [
+            {
+              "expression": "category",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "expenses_clientId_clients_id_fk": {
           "name": "expenses_clientId_clients_id_fk",
@@ -355,7 +417,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "expenses_recurring_requires_frequency": {
+          "name": "expenses_recurring_requires_frequency",
+          "value": "NOT \"expenses\".\"recurring\" OR \"expenses\".\"recurringFrequency\" IS NOT NULL"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.milestones": {
@@ -421,7 +488,23 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "milestones_project_idx": {
+          "name": "milestones_project_idx",
+          "columns": [
+            {
+              "expression": "projectId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "milestones_projectId_projects_id_fk": {
           "name": "milestones_projectId_projects_id_fk",
@@ -592,7 +675,29 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "notes_entity_idx": {
+          "name": "notes_entity_idx",
+          "columns": [
+            {
+              "expression": "entityType",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "entityId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -618,12 +723,6 @@
         },
         "projectId": {
           "name": "projectId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "milestoneId": {
-          "name": "milestoneId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -681,7 +780,53 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "payments_client_idx": {
+          "name": "payments_client_idx",
+          "columns": [
+            {
+              "expression": "clientId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "payments_project_idx": {
+          "name": "payments_project_idx",
+          "columns": [
+            {
+              "expression": "projectId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "payments_status_idx": {
+          "name": "payments_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "payments_clientId_clients_id_fk": {
           "name": "payments_clientId_clients_id_fk",
@@ -702,19 +847,6 @@
           "tableTo": "projects",
           "columnsFrom": [
             "projectId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "payments_milestoneId_milestones_id_fk": {
-          "name": "payments_milestoneId_milestones_id_fk",
-          "tableFrom": "payments",
-          "tableTo": "milestones",
-          "columnsFrom": [
-            "milestoneId"
           ],
           "columnsTo": [
             "id"
@@ -918,7 +1050,50 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "reminders_entity_idx": {
+          "name": "reminders_entity_idx",
+          "columns": [
+            {
+              "expression": "entityType",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "entityId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "reminders_status_due_idx": {
+          "name": "reminders_status_due_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "dueAt",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -1042,7 +1217,53 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "tasks_project_idx": {
+          "name": "tasks_project_idx",
+          "columns": [
+            {
+              "expression": "projectId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "tasks_epic_idx": {
+          "name": "tasks_epic_idx",
+          "columns": [
+            {
+              "expression": "epicId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "tasks_status_idx": {
+          "name": "tasks_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "tasks_epicId_epics_id_fk": {
           "name": "tasks_epicId_epics_id_fk",
