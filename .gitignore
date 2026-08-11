@@ -128,6 +128,9 @@ dist
 # pnpm
 .pnpm-store
 
+# Brainstorm visual companion session files
+.superpowers/
+
 # yarn v3
 .pnp.*
 .yarn/*
