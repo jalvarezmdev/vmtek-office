@@ -9,7 +9,7 @@ async function main() {
 
   if (!email || !password) {
     throw new Error(
-      'ADMIN_EMAIL and ADMIN_PASSWORD env vars are required to seed the admin user.',
+      'ADMIN_EMAIL and ADMIN_PASSWORD env vars are required to seed the admin user.'
     );
   }
 

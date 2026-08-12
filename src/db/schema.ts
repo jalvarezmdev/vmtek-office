@@ -26,8 +26,16 @@ export const milestoneStatusEnum = pgEnum('milestone_status', [
   'active',
   'done',
 ]);
-export const epicStatusEnum = pgEnum('epic_status', ['planned', 'active', 'done']);
-export const taskStatusEnum = pgEnum('task_status', ['todo', 'in_progress', 'done']);
+export const epicStatusEnum = pgEnum('epic_status', [
+  'planned',
+  'active',
+  'done',
+]);
+export const taskStatusEnum = pgEnum('task_status', [
+  'todo',
+  'in_progress',
+  'done',
+]);
 export const taskPriorityEnum = pgEnum('task_priority', [
   'low',
   'medium',
@@ -129,7 +137,7 @@ export const accounts = pgTable(
   },
   (account) => [
     primaryKey({ columns: [account.provider, account.providerAccountId] }),
-  ],
+  ]
 );
 
 export const sessions = pgTable('sessions', {
@@ -151,7 +159,7 @@ export const verificationTokens = pgTable(
     primaryKey({
       columns: [verificationToken.identifier, verificationToken.token],
     }),
-  ],
+  ]
 );
 
 export const clients = pgTable('clients', {
@@ -236,7 +244,7 @@ export const milestones = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (table) => [index('milestones_project_idx').on(table.projectId)],
+  (table) => [index('milestones_project_idx').on(table.projectId)]
 );
 
 export const epics = pgTable(
@@ -257,7 +265,7 @@ export const epics = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (table) => [index('epics_project_idx').on(table.projectId)],
+  (table) => [index('epics_project_idx').on(table.projectId)]
 );
 
 export const tasks = pgTable(
@@ -285,7 +293,7 @@ export const tasks = pgTable(
     index('tasks_project_idx').on(table.projectId),
     index('tasks_epic_idx').on(table.epicId),
     index('tasks_status_idx').on(table.status),
-  ],
+  ]
 );
 
 export const payments = pgTable(
@@ -316,7 +324,7 @@ export const payments = pgTable(
     index('payments_client_idx').on(table.clientId),
     index('payments_project_idx').on(table.projectId),
     index('payments_status_idx').on(table.status),
-  ],
+  ]
 );
 
 export const expenses = pgTable(
@@ -350,9 +358,9 @@ export const expenses = pgTable(
     index('expenses_category_idx').on(table.category),
     check(
       'expenses_recurring_requires_frequency',
-      sql`NOT ${table.recurring} OR ${table.recurringFrequency} IS NOT NULL`,
+      sql`NOT ${table.recurring} OR ${table.recurringFrequency} IS NOT NULL`
     ),
-  ],
+  ]
 );
 
 export const reminders = pgTable(
@@ -378,7 +386,7 @@ export const reminders = pgTable(
   (table) => [
     index('reminders_entity_idx').on(table.entityType, table.entityId),
     index('reminders_status_due_idx').on(table.status, table.dueAt),
-  ],
+  ]
 );
 
 export const notes = pgTable(
@@ -397,7 +405,7 @@ export const notes = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (table) => [index('notes_entity_idx').on(table.entityType, table.entityId)],
+  (table) => [index('notes_entity_idx').on(table.entityType, table.entityId)]
 );
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -458,13 +466,16 @@ export const tasksRelations = relations(tasks, ({ one }) => ({
   }),
 }));
 
-export const negotiationsRelations = relations(negotiations, ({ one, many }) => ({
-  client: one(clients, {
-    fields: [negotiations.clientId],
-    references: [clients.id],
-  }),
-  projects: many(projects),
-}));
+export const negotiationsRelations = relations(
+  negotiations,
+  ({ one, many }) => ({
+    client: one(clients, {
+      fields: [negotiations.clientId],
+      references: [clients.id],
+    }),
+    projects: many(projects),
+  })
+);
 
 export const paymentsRelations = relations(payments, ({ one }) => ({
   client: one(clients, {
