@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
-import { eq } from 'drizzle-orm';
 import { db } from './index';
 import { users } from './schema';
 
@@ -14,38 +13,35 @@ async function main() {
     );
   }
 
-  const name = process.env.ADMIN_NAME ?? 'Admin';
+  const name = process.env.ADMIN_NAME;
   const passwordHash = await bcrypt.hash(password, 10);
 
-  const existing = await db.query.users.findFirst({
-    where: eq(users.email, email),
-  });
-
-  if (existing) {
-    await db
-      .update(users)
-      .set({
-        name,
-        passwordHash,
-        role: 'admin',
-        emailVerified: new Date(),
-      })
-      .where(eq(users.email, email));
-    console.log(`Admin user updated: ${email}`);
-  } else {
-    await db.insert(users).values({
-      name,
+  await db
+    .insert(users)
+    .values({
+      name: name ?? 'Admin',
       email,
       emailVerified: new Date(),
       passwordHash,
       role: 'admin',
+    })
+    .onConflictDoUpdate({
+      target: users.email,
+      set: {
+        name: name ?? undefined,
+        passwordHash,
+        role: 'admin',
+        emailVerified: new Date(),
+      },
     });
-    console.log(`Admin user created: ${email}`);
-  }
+
+  console.log(`Admin user ensured: ${email}`);
 }
 
 main()
-  .then(() => process.exit(0))
+  .then(() => {
+    process.exitCode = 0;
+  })
   .catch((error) => {
     console.error('Seed failed:', error);
     process.exit(1);
