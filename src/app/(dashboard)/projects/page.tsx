@@ -29,7 +29,7 @@ export default async function ProjectsPage() {
       orderBy: (clients, { asc }) => [asc(clients.name)],
     }),
     db.query.negotiations.findMany({
-      columns: { id: true, title: true },
+      columns: { id: true, title: true, clientId: true },
       // Only open and won negotiations are linkable to a project.
       where: (negotiations, { inArray }) =>
         inArray(negotiations.status, ['open', 'won']),

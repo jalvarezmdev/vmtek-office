@@ -29,7 +29,11 @@ const projectStatuses = projectStatusEnum.enumValues;
 const budgetCurrencies = ['USD', 'EUR', 'MXN', 'GBP'];
 
 export type ClientOption = { id: string; name: string };
-export type NegotiationOption = { id: string; title: string };
+export type NegotiationOption = {
+  id: string;
+  title: string;
+  clientId: string | null;
+};
 
 type ProjectFormProps = {
   mode?: 'create' | 'edit';
@@ -174,7 +178,17 @@ export function ProjectForm({
           <Label>Negotiation</Label>
           <Select
             value={negotiationSelect}
-            onValueChange={setNegotiationSelect}
+            onValueChange={(next) => {
+              setNegotiationSelect(next);
+              if (next !== 'none') {
+                const selected = negotiations.find(
+                  (negotiation) => negotiation.id === next
+                );
+                if (selected?.clientId) {
+                  setClientSelect(selected.clientId);
+                }
+              }
+            }}
           >
             <SelectTrigger className="w-full">
               <SelectValue />
