@@ -1,5 +1,6 @@
 import { Bell } from 'lucide-react';
 
+import { CompleteReminderButton } from '@/components/dashboard/complete-reminder-button';
 import { DueDate } from '@/components/dashboard/due-date';
 import { EmptyState } from '@/components/empty-state';
 import { WidgetCard } from '@/components/widget-card';
@@ -52,14 +53,19 @@ export async function RemindersWidget({ className }: { className?: string }) {
       ) : (
         <ul className="space-y-3">
           {sorted.map((reminder) => (
-            <li key={reminder.id} className="flex flex-col gap-0.5">
-              <span className="truncate font-medium">{reminder.title}</span>
-              <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                <DueDate date={reminder.dueAt} showTime timeZone={timeZone} />
-                {reminder.entityType !== 'none' ? (
-                  <span className="capitalize">{reminder.entityType}</span>
-                ) : null}
-              </span>
+            <li key={reminder.id} className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="truncate font-medium">{reminder.title}</span>
+                <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <DueDate date={reminder.dueAt} showTime timeZone={timeZone} />
+                  {reminder.entityType !== 'none' ? (
+                    <span className="capitalize">{reminder.entityType}</span>
+                  ) : null}
+                </span>
+              </div>
+              {reminder.status === 'pending' ? (
+                <CompleteReminderButton reminderId={reminder.id} />
+              ) : null}
             </li>
           ))}
         </ul>
