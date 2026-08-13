@@ -1,26 +1,16 @@
 import type { Metadata } from 'next';
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { ActiveProjectsWidget } from '@/components/dashboard/active-projects-widget';
+import { MoneyOverviewWidget } from '@/components/dashboard/money-overview-widget';
+import { OpenNegotiationsWidget } from '@/components/dashboard/open-negotiations-widget';
+import { PendingPaymentsWidget } from '@/components/dashboard/pending-payments-widget';
+import { PendingTasksWidget } from '@/components/dashboard/pending-tasks-widget';
+import { RemindersWidget } from '@/components/dashboard/reminders-widget';
 
 export const metadata: Metadata = {
   title: 'Dashboard',
   description: 'Overview of your VMWTEK Office workspace.',
 };
-
-const widgetTitles = [
-  'Reminders',
-  'Pending payments',
-  'Active projects',
-  'Open negotiations',
-  'Money overview',
-  'Pending tasks',
-] as const;
 
 export default function DashboardPage() {
   return (
@@ -28,19 +18,16 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          A quick overview of your business. Widgets are coming soon.
+          A quick overview of your business.
         </p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {widgetTitles.map((title) => (
-          <Card key={title}>
-            <CardHeader>
-              <CardTitle className="text-base">{title}</CardTitle>
-              <CardDescription>Coming soon</CardDescription>
-            </CardHeader>
-            <CardContent className="h-24" />
-          </Card>
-        ))}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <RemindersWidget />
+        <PendingTasksWidget />
+        <ActiveProjectsWidget className="md:col-span-2 xl:col-span-1" />
+        <OpenNegotiationsWidget />
+        <PendingPaymentsWidget />
+        <MoneyOverviewWidget className="md:col-span-2 xl:col-span-1" />
       </div>
     </div>
   );
