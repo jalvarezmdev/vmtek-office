@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { auth } from '@/auth';
@@ -15,8 +16,11 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get('sidebar_state')?.value === 'true';
+
   return (
-    <SidebarProvider defaultOpen>
+    <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar />
       <SidebarInset>
         <DashboardHeader user={session.user} />

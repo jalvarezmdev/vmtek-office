@@ -1,5 +1,7 @@
 'use client';
 
+import type { Session } from 'next-auth';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,14 +23,10 @@ function getInitials(name?: string | null, email?: string | null) {
       .slice(0, 2)
       .toUpperCase();
   }
-  return (email ?? '?').slice(0, 2).toUpperCase();
+  return (email || '?').slice(0, 2).toUpperCase();
 }
 
-export function DashboardHeader({
-  user,
-}: {
-  user: { name?: string | null; email?: string | null };
-}) {
+export function DashboardHeader({ user }: { user: Session['user'] }) {
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
       <SidebarTrigger className="-ml-1" />

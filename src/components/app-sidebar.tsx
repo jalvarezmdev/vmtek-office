@@ -96,7 +96,9 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SignOutButton />
+            <SidebarMenuButton asChild tooltip="Sign out">
+              <SignOutButton />
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

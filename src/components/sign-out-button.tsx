@@ -13,18 +13,20 @@ function SignOutSubmit() {
       type="submit"
       variant="ghost"
       size="sm"
-      className="w-full justify-start"
+      className="w-full justify-start group-data-[collapsible=icon]:w-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
       disabled={pending}
     >
       <LogOut aria-hidden="true" />
-      {pending ? 'Signing out…' : 'Sign out'}
+      <span className="group-data-[collapsible=icon]:hidden">
+        {pending ? 'Signing out…' : 'Sign out'}
+      </span>
     </Button>
   );
 }
 
-export function SignOutButton() {
+export function SignOutButton(props: React.ComponentProps<'form'>) {
   return (
-    <form action={signOutAction}>
+    <form action={signOutAction} {...props}>
       <SignOutSubmit />
     </form>
   );
