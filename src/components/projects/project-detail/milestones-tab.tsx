@@ -2,8 +2,19 @@ import type { InferSelectModel } from 'drizzle-orm';
 import { Flag } from 'lucide-react';
 
 import { EmptyState } from '@/components/empty-state';
+import {
+  MilestoneCreateDialog,
+  MilestoneRowActions,
+} from '@/components/projects/project-detail/milestone-dialog';
+import type { PaymentOption } from '@/components/projects/project-detail/milestone-form';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -22,6 +33,8 @@ import {
 import { formatDate, formatMoney } from '@/lib/money';
 
 export type MilestonesTabProps = {
+  projectId: string;
+  payments: PaymentOption[];
   milestones: Array<
     InferSelectModel<typeof milestones> & {
       payment: InferSelectModel<typeof payments> | null;
@@ -30,16 +43,30 @@ export type MilestonesTabProps = {
 };
 
 export function MilestonesTab({
+  projectId,
+  payments,
   milestones: milestoneRows,
 }: MilestonesTabProps) {
   return (
     <Card>
+      <CardHeader className="border-b">
+        <CardTitle>Milestones</CardTitle>
+        <CardAction>
+          <MilestoneCreateDialog projectId={projectId} payments={payments} />
+        </CardAction>
+      </CardHeader>
       <CardContent className="px-0 pt-0">
         {milestoneRows.length === 0 ? (
           <EmptyState
             icon={Flag}
             title="No milestones"
             description="Milestones for this project will show up here."
+            action={
+              <MilestoneCreateDialog
+                projectId={projectId}
+                payments={payments}
+              />
+            }
           />
         ) : (
           <Table>
@@ -49,6 +76,7 @@ export function MilestonesTab({
                 <TableHead>Status</TableHead>
                 <TableHead>Due date</TableHead>
                 <TableHead>Linked payment</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -86,14 +114,18 @@ export function MilestonesTab({
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <MilestoneRowActions
+                      milestone={milestone}
+                      projectId={projectId}
+                      payments={payments}
+                    />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         )}
-        <p className="border-t pt-3 text-xs text-muted-foreground">
-          Milestones are managed from the project edit view.
-        </p>
       </CardContent>
     </Card>
   );

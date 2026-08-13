@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react';
 import {
   ProjectForm,
   type ClientOption,
+  type NegotiationOption,
 } from '@/components/projects/project-form';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,9 +20,13 @@ import {
 
 type ProjectFormDialogProps = {
   clients: ClientOption[];
+  negotiations: NegotiationOption[];
 };
 
-export function ProjectFormDialog({ clients }: ProjectFormDialogProps) {
+export function ProjectFormDialog({
+  clients,
+  negotiations,
+}: ProjectFormDialogProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -39,7 +44,11 @@ export function ProjectFormDialog({ clients }: ProjectFormDialogProps) {
             Start tracking a delivery project and its milestones.
           </DialogDescription>
         </DialogHeader>
-        <ProjectForm clients={clients} onSuccess={() => setOpen(false)} />
+        <ProjectForm
+          clients={clients}
+          negotiations={negotiations}
+          onSuccess={() => setOpen(false)}
+        />
       </DialogContent>
     </Dialog>
   );

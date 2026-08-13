@@ -2,8 +2,18 @@ import type { InferSelectModel } from 'drizzle-orm';
 import { Layers } from 'lucide-react';
 
 import { EmptyState } from '@/components/empty-state';
+import {
+  EpicCreateDialog,
+  EpicRowActions,
+} from '@/components/projects/project-detail/epic-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -16,6 +26,7 @@ import { epics, tasks } from '@/db/schema';
 import { epicStatusLabel, epicStatusVariant } from '@/lib/labels';
 
 export type EpicsTabProps = {
+  projectId: string;
   epics: Array<
     InferSelectModel<typeof epics> & {
       tasks: InferSelectModel<typeof tasks>[];
@@ -23,15 +34,22 @@ export type EpicsTabProps = {
   >;
 };
 
-export function EpicsTab({ epics: epicRows }: EpicsTabProps) {
+export function EpicsTab({ projectId, epics: epicRows }: EpicsTabProps) {
   return (
     <Card>
+      <CardHeader className="border-b">
+        <CardTitle>Epics</CardTitle>
+        <CardAction>
+          <EpicCreateDialog projectId={projectId} />
+        </CardAction>
+      </CardHeader>
       <CardContent className="px-0 pt-0">
         {epicRows.length === 0 ? (
           <EmptyState
             icon={Layers}
             title="No epics"
             description="Epics for this project will show up here."
+            action={<EpicCreateDialog projectId={projectId} />}
           />
         ) : (
           <Table>
@@ -40,6 +58,7 @@ export function EpicsTab({ epics: epicRows }: EpicsTabProps) {
                 <TableHead>Name</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Tasks</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -56,14 +75,14 @@ export function EpicsTab({ epics: epicRows }: EpicsTabProps) {
                       ? 'No tasks'
                       : `${epic.tasks.length} task${epic.tasks.length === 1 ? '' : 's'}`}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <EpicRowActions epic={epic} projectId={projectId} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         )}
-        <p className="border-t pt-3 text-xs text-muted-foreground">
-          Epics are managed from the project edit view.
-        </p>
       </CardContent>
     </Card>
   );

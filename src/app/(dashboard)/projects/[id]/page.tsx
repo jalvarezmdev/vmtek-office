@@ -16,7 +16,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDb } from '@/db';
 import { projects } from '@/db/schema';
-import { projectStatusLabel, projectStatusVariant } from '@/lib/labels';
+import {
+  paymentStatusLabel,
+  projectStatusLabel,
+  projectStatusVariant,
+} from '@/lib/labels';
 import { formatDate, formatMoney } from '@/lib/money';
 
 export default async function ProjectDetailPage({
@@ -27,54 +31,88 @@ export default async function ProjectDetailPage({
   const { id } = await params;
   const db = await getDb();
 
-  const [project, notes, reminders, clientOptions] = await Promise.all([
-    db.query.projects.findFirst({
-      where: eq(projects.id, id),
-      with: {
-        client: true,
-        negotiation: true,
-        milestones: {
-          with: { payment: true },
-          orderBy: (milestones, { asc }) => [asc(milestones.createdAt)],
+  const [project, notes, reminders, clientOptions, negotiationOptions] =
+    await Promise.all([
+      db.query.projects.findFirst({
+        where: eq(projects.id, id),
+        with: {
+          client: true,
+          negotiation: true,
+          milestones: {
+            with: { payment: true },
+            orderBy: (milestones, { asc }) => [asc(milestones.createdAt)],
+          },
+          epics: {
+            with: { tasks: true },
+            orderBy: (epics, { asc }) => [asc(epics.createdAt)],
+          },
+          tasks: {
+            with: { epic: true },
+            orderBy: (tasks, { asc }) => [asc(tasks.createdAt)],
+          },
+          payments: {
+            with: { client: true },
+            orderBy: (payments, { desc }) => [desc(payments.createdAt)],
+          },
+          expenses: {
+            orderBy: (expenses, { desc }) => [desc(expenses.date)],
+          },
         },
-        epics: {
-          with: { tasks: true },
-          orderBy: (epics, { asc }) => [asc(epics.createdAt)],
-        },
-        tasks: {
-          with: { epic: true },
-          orderBy: (tasks, { asc }) => [asc(tasks.createdAt)],
-        },
-        payments: {
-          with: { client: true },
-          orderBy: (payments, { desc }) => [desc(payments.createdAt)],
-        },
-        expenses: {
-          orderBy: (expenses, { desc }) => [desc(expenses.date)],
-        },
-      },
-    }),
-    db.query.notes.findMany({
-      where: (n, { and, eq }) =>
-        and(eq(n.entityType, 'project'), eq(n.entityId, id)),
-      orderBy: (n, { desc }) => [desc(n.createdAt)],
-    }),
-    db.query.reminders.findMany({
-      where: (r, { and, eq }) =>
-        and(eq(r.entityType, 'project'), eq(r.entityId, id)),
-      orderBy: (r, { asc }) => [asc(r.dueAt)],
-    }),
-    db.query.clients.findMany({
-      columns: { id: true, name: true },
-      orderBy: (clients, { asc }) => [asc(clients.name)],
-    }),
-  ]);
+      }),
+      db.query.notes.findMany({
+        where: (n, { and, eq }) =>
+          and(eq(n.entityType, 'project'), eq(n.entityId, id)),
+        orderBy: (n, { desc }) => [desc(n.createdAt)],
+      }),
+      db.query.reminders.findMany({
+        where: (r, { and, eq }) =>
+          and(eq(r.entityType, 'project'), eq(r.entityId, id)),
+        orderBy: (r, { asc }) => [asc(r.dueAt)],
+      }),
+      db.query.clients.findMany({
+        columns: { id: true, name: true },
+        orderBy: (clients, { asc }) => [asc(clients.name)],
+      }),
+      db.query.negotiations.findMany({
+        columns: { id: true, title: true },
+        // Only open and won negotiations are linkable to a project.
+        where: (negotiations, { inArray }) =>
+          inArray(negotiations.status, ['open', 'won']),
+        orderBy: (negotiations, { asc }) => [asc(negotiations.title)],
+      }),
+    ]);
 
   if (!project) notFound();
 
   const clients = clientOptions.map((client) => ({
     id: client.id,
     name: client.name,
+  }));
+
+  // Keep the currently linked negotiation in the Select even if it later moved
+  // to 'lost', so editing the project never silently clears the link.
+  const negotiations = [...negotiationOptions];
+  if (
+    project.negotiationId &&
+    project.negotiation &&
+    !negotiations.some(
+      (negotiation) => negotiation.id === project.negotiationId
+    )
+  ) {
+    negotiations.push({
+      id: project.negotiationId,
+      title: project.negotiation.title,
+    });
+  }
+
+  const paymentOptions = project.payments.map((payment) => ({
+    id: payment.id,
+    label: `${formatMoney(payment.amount, payment.currency)} · ${paymentStatusLabel[payment.status]}`,
+  }));
+
+  const epicOptions = project.epics.map((epic) => ({
+    id: epic.id,
+    name: epic.name,
   }));
 
   return (
@@ -111,12 +149,14 @@ export default async function ProjectDetailPage({
               description: project.description,
               status: project.status,
               clientId: project.clientId,
+              negotiationId: project.negotiationId,
               startDate: project.startDate,
               endDate: project.endDate,
               budgetCurrency: project.budgetCurrency,
               budgetAmount: project.budgetAmount,
             }}
             clients={clients}
+            negotiations={negotiations}
           />
         </div>
         {project.description ? (
@@ -166,15 +206,23 @@ export default async function ProjectDetailPage({
         </TabsContent>
 
         <TabsContent value="milestones">
-          <MilestonesTab milestones={project.milestones} />
+          <MilestonesTab
+            projectId={project.id}
+            payments={paymentOptions}
+            milestones={project.milestones}
+          />
         </TabsContent>
 
         <TabsContent value="epics">
-          <EpicsTab epics={project.epics} />
+          <EpicsTab projectId={project.id} epics={project.epics} />
         </TabsContent>
 
         <TabsContent value="tasks">
-          <TasksTab tasks={project.tasks} />
+          <TasksTab
+            projectId={project.id}
+            epics={epicOptions}
+            tasks={project.tasks}
+          />
         </TabsContent>
 
         <TabsContent value="payments">

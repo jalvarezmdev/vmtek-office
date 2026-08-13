@@ -2,8 +2,19 @@ import type { InferSelectModel } from 'drizzle-orm';
 import { ListTodo } from 'lucide-react';
 
 import { EmptyState } from '@/components/empty-state';
+import {
+  TaskCreateDialog,
+  TaskRowActions,
+} from '@/components/projects/project-detail/task-dialog';
+import type { EpicOption } from '@/components/projects/project-detail/task-form';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -23,6 +34,8 @@ import { formatDate, isOverdue } from '@/lib/money';
 import { cn } from '@/lib/utils';
 
 export type TasksTabProps = {
+  projectId: string;
+  epics: EpicOption[];
   tasks: Array<
     InferSelectModel<typeof tasks> & {
       epic: InferSelectModel<typeof epics> | null;
@@ -30,15 +43,22 @@ export type TasksTabProps = {
   >;
 };
 
-export function TasksTab({ tasks: taskRows }: TasksTabProps) {
+export function TasksTab({ projectId, epics, tasks: taskRows }: TasksTabProps) {
   return (
     <Card>
+      <CardHeader className="border-b">
+        <CardTitle>Tasks</CardTitle>
+        <CardAction>
+          <TaskCreateDialog projectId={projectId} epics={epics} />
+        </CardAction>
+      </CardHeader>
       <CardContent className="px-0 pt-0">
         {taskRows.length === 0 ? (
           <EmptyState
             icon={ListTodo}
             title="No tasks"
             description="Tasks for this project will show up here."
+            action={<TaskCreateDialog projectId={projectId} epics={epics} />}
           />
         ) : (
           <Table>
@@ -49,6 +69,7 @@ export function TasksTab({ tasks: taskRows }: TasksTabProps) {
                 <TableHead>Priority</TableHead>
                 <TableHead>Due date</TableHead>
                 <TableHead>Epic</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -81,15 +102,19 @@ export function TasksTab({ tasks: taskRows }: TasksTabProps) {
                     <TableCell className="text-muted-foreground">
                       {task.epic ? task.epic.name : '—'}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <TaskRowActions
+                        task={task}
+                        projectId={projectId}
+                        epics={epics}
+                      />
+                    </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
         )}
-        <p className="border-t pt-3 text-xs text-muted-foreground">
-          Tasks are managed from the project edit view.
-        </p>
       </CardContent>
     </Card>
   );

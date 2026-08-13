@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default async function ProjectsPage() {
   const db = await getDb();
 
-  const [projects, clientOptions] = await Promise.all([
+  const [projects, clientOptions, negotiationOptions] = await Promise.all([
     db.query.projects.findMany({
       with: { client: true, milestones: true },
       // Most recent first: the list mirrors the work that is current.
@@ -27,6 +27,13 @@ export default async function ProjectsPage() {
     db.query.clients.findMany({
       columns: { id: true, name: true },
       orderBy: (clients, { asc }) => [asc(clients.name)],
+    }),
+    db.query.negotiations.findMany({
+      columns: { id: true, title: true },
+      // Only open and won negotiations are linkable to a project.
+      where: (negotiations, { inArray }) =>
+        inArray(negotiations.status, ['open', 'won']),
+      orderBy: (negotiations, { asc }) => [asc(negotiations.title)],
     }),
   ]);
 
@@ -57,7 +64,10 @@ export default async function ProjectsPage() {
             The delivery work VMWTEK performs.
           </p>
         </div>
-        <ProjectFormDialog clients={clients} />
+        <ProjectFormDialog
+          clients={clients}
+          negotiations={negotiationOptions}
+        />
       </div>
 
       {rows.length === 0 ? (
@@ -67,7 +77,12 @@ export default async function ProjectsPage() {
               icon={FolderKanban}
               title="No projects yet"
               description="Create your first project to start tracking milestones and delivery work."
-              action={<ProjectFormDialog clients={clients} />}
+              action={
+                <ProjectFormDialog
+                  clients={clients}
+                  negotiations={negotiationOptions}
+                />
+              }
             />
           </CardContent>
         </Card>

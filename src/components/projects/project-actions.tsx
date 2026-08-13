@@ -9,6 +9,7 @@ import { deleteProjectAction } from '@/actions/projects';
 import {
   ProjectForm,
   type ClientOption,
+  type NegotiationOption,
 } from '@/components/projects/project-form';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +30,7 @@ type ProjectActionsProject = {
   description: string | null;
   status: ProjectStatus;
   clientId: string | null;
+  negotiationId: string | null;
   startDate: Date | null;
   endDate: Date | null;
   budgetCurrency: string | null;
@@ -38,9 +40,11 @@ type ProjectActionsProject = {
 export function ProjectActions({
   project,
   clients,
+  negotiations,
 }: {
   project: ProjectActionsProject;
   clients: ClientOption[];
+  negotiations: NegotiationOption[];
 }) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
@@ -52,6 +56,7 @@ export function ProjectActions({
     description: project.description ?? '',
     status: project.status,
     clientId: project.clientId ?? '',
+    negotiationId: project.negotiationId ?? '',
     startDate: project.startDate,
     endDate: project.endDate,
     budgetCurrency: project.budgetCurrency ?? '',
@@ -90,6 +95,7 @@ export function ProjectActions({
             mode="edit"
             projectId={project.id}
             clients={clients}
+            negotiations={negotiations}
             defaultValues={defaultValues}
             onSuccess={() => {
               setEditOpen(false);

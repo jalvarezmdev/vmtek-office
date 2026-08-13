@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { toDateInputValue } from '@/lib/date-input';
 import { projectStatusLabel, type ProjectStatus } from '@/lib/labels';
 import { projectSchema, type ProjectInput } from '@/lib/project-schemas';
 
@@ -28,28 +29,22 @@ const projectStatuses = projectStatusEnum.enumValues;
 const budgetCurrencies = ['USD', 'EUR', 'MXN', 'GBP'];
 
 export type ClientOption = { id: string; name: string };
+export type NegotiationOption = { id: string; title: string };
 
 type ProjectFormProps = {
   mode?: 'create' | 'edit';
   projectId?: string;
   clients: ClientOption[];
+  negotiations: NegotiationOption[];
   defaultValues?: Partial<ProjectInput>;
   onSuccess?: () => void;
 };
-
-// Native date inputs take YYYY-MM-DD. Dates are stored at UTC midnight, so
-// ISO string slicing keeps the rendered business date in agreement.
-function toDateInputValue(value: Date | string | null | undefined): string {
-  if (!value) return '';
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toISOString().slice(0, 10);
-}
 
 export function ProjectForm({
   mode = 'create',
   projectId,
   clients,
+  negotiations,
   defaultValues,
   onSuccess,
 }: ProjectFormProps) {
@@ -63,6 +58,9 @@ export function ProjectForm({
   // '' (from an internal project) and unset default to the 'none' option.
   const [clientSelect, setClientSelect] = useState(
     defaultValues?.clientId || 'none'
+  );
+  const [negotiationSelect, setNegotiationSelect] = useState(
+    defaultValues?.negotiationId || 'none'
   );
   const [currency, setCurrency] = useState(defaultValues?.budgetCurrency ?? '');
 
@@ -82,6 +80,7 @@ export function ProjectForm({
       description: formData.get('description'),
       status,
       clientId: clientSelect === 'none' ? '' : clientSelect,
+      negotiationId: negotiationSelect === 'none' ? '' : negotiationSelect,
       startDate: formData.get('startDate'),
       endDate: formData.get('endDate'),
       budgetCurrency: currency,
@@ -170,6 +169,25 @@ export function ProjectForm({
               </SelectContent>
             </Select>
           </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label>Negotiation</Label>
+          <Select
+            value={negotiationSelect}
+            onValueChange={setNegotiationSelect}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No negotiation</SelectItem>
+              {negotiations.map((negotiation) => (
+                <SelectItem key={negotiation.id} value={negotiation.id}>
+                  {negotiation.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
