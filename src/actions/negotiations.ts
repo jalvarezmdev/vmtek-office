@@ -4,9 +4,10 @@ import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { createProjectAction } from '@/actions/projects';
 import { auth } from '@/auth';
 import { getDb } from '@/db';
-import { clients, negotiations } from '@/db/schema';
+import { clients, negotiations, negotiationStatusEnum } from '@/db/schema';
 import {
   negotiationSchema,
   type NegotiationInput,
@@ -202,6 +203,101 @@ export async function deleteNegotiationAction(
     }
 
     return { success: true };
+  } catch (error) {
+    return failed(error);
+  }
+}
+
+const negotiationStatusSchema = z.enum(negotiationStatusEnum.enumValues);
+
+export async function setNegotiationStatusAction(
+  id: string,
+  status: 'open' | 'won' | 'lost'
+): Promise<NegotiationActionResult> {
+  const session = await auth();
+  if (!session?.user) {
+    return unauthorized();
+  }
+
+  if (!negotiationIdSchema.safeParse(id).success) {
+    return invalid();
+  }
+
+  const parsed = negotiationStatusSchema.safeParse(status);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? 'Invalid status',
+    };
+  }
+
+  try {
+    const db = await getDb();
+    const result = await db
+      .update(negotiations)
+      .set({ status: parsed.data })
+      .where(eq(negotiations.id, id));
+
+    revalidatePath('/negotiations');
+    revalidatePath('/clients');
+    revalidatePath('/');
+
+    if (result.rowCount === 0) {
+      return { success: false, error: 'Negotiation not found' };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return failed(error);
+  }
+}
+
+export async function convertNegotiationToProjectAction(
+  negotiationId: string,
+  name?: string
+): Promise<NegotiationActionResult> {
+  const session = await auth();
+  if (!session?.user) {
+    return unauthorized();
+  }
+
+  if (!negotiationIdSchema.safeParse(negotiationId).success) {
+    return invalid();
+  }
+
+  try {
+    const db = await getDb();
+    const negotiation = await db.query.negotiations.findFirst({
+      where: eq(negotiations.id, negotiationId),
+    });
+
+    if (!negotiation) {
+      return { success: false, error: 'Negotiation not found' };
+    }
+
+    if (negotiation.status !== 'won') {
+      return {
+        success: false,
+        error: 'Only won negotiations can be converted to projects',
+      };
+    }
+
+    const project = await createProjectAction({
+      name: name?.trim() || negotiation.title,
+      status: 'planning',
+      clientId: negotiation.clientId,
+      negotiationId: negotiation.id,
+      startDate: null,
+      endDate: null,
+    });
+
+    if (!project.success) {
+      return { success: false, error: project.error ?? 'Something went wrong' };
+    }
+
+    revalidatePath('/negotiations');
+
+    return { success: true, id: project.id };
   } catch (error) {
     return failed(error);
   }
