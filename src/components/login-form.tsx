@@ -13,6 +13,8 @@ export function LoginForm() {
     null
   );
 
+  const hasError = Boolean(state?.error);
+
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
@@ -25,6 +27,8 @@ export function LoginForm() {
           placeholder="you@example.com"
           required
           disabled={pending}
+          aria-invalid={hasError}
+          aria-describedby={hasError ? 'form-error' : undefined}
         />
       </div>
       <div className="flex flex-col gap-2">
@@ -34,13 +38,15 @@ export function LoginForm() {
           name="password"
           type="password"
           autoComplete="current-password"
-          placeholder="••••••••"
           required
           disabled={pending}
+          aria-invalid={hasError}
+          aria-describedby={hasError ? 'form-error' : undefined}
         />
       </div>
       {state?.error ? (
         <p
+          id="form-error"
           role="alert"
           className="text-sm text-destructive"
           data-slot="form-error"

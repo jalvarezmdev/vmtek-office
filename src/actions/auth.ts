@@ -1,6 +1,6 @@
 'use server';
 
-import { AuthError } from 'next-auth';
+import { AuthError, CredentialsSignin } from 'next-auth';
 
 import { signIn } from '@/auth';
 import { loginSchema } from '@/lib/auth-schemas';
@@ -27,11 +27,15 @@ export async function loginAction(
       redirectTo: '/',
     });
   } catch (error) {
-    if (error instanceof AuthError) {
+    if (error instanceof CredentialsSignin) {
       return { error: 'Invalid email or password.' };
+    }
+    if (error instanceof AuthError) {
+      console.error('Login failed with a non-credential AuthError:', error);
     }
     throw error;
   }
 
+  // signIn redirects on success (NEXT_REDIRECT thrown); unreachable at runtime, needed for types
   return null;
 }
