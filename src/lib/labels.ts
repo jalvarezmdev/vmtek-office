@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   epicStatusEnum,
   expenseCategoryEnum,
+  expenseFrequencyEnum,
   milestoneStatusEnum,
   negotiationStatusEnum,
   paymentStatusEnum,
@@ -25,6 +26,7 @@ export type TaskStatus = (typeof taskStatusEnum.enumValues)[number];
 export type TaskPriority = (typeof taskPriorityEnum.enumValues)[number];
 export type PaymentStatus = (typeof paymentStatusEnum.enumValues)[number];
 export type ExpenseCategory = (typeof expenseCategoryEnum.enumValues)[number];
+export type ExpenseFrequency = (typeof expenseFrequencyEnum.enumValues)[number];
 export type ReminderStatus = (typeof reminderStatusEnum.enumValues)[number];
 export type ReminderRepeat = (typeof reminderRepeatEnum.enumValues)[number];
 
@@ -119,6 +121,13 @@ export const expenseCategoryLabel: Record<ExpenseCategory, string> = {
   travel: 'Travel',
   office: 'Office',
   other: 'Other',
+};
+
+export const expenseFrequencyLabel: Record<ExpenseFrequency, string> = {
+  monthly: 'Monthly',
+  yearly: 'Yearly',
+  quarterly: 'Quarterly',
+  weekly: 'Weekly',
 };
 
 export const reminderStatusLabel: Record<ReminderStatus, string> = {
