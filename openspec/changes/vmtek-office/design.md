@@ -32,7 +32,7 @@ Data reads run directly in Server Components via Drizzle queries; mutations go t
 ### D3: Auth.js (NextAuth v5) with credentials provider
 - Single admin seeded from `ADMIN_EMAIL`/`ADMIN_PASSWORD` env vars, bcrypt-hashed. Middleware protects all routes except `/login`.
 - Rationale: user preference (Auth: D); open source, no external dependency. Clerk considered but rejected — its value (managed SSO/social) is unused for a single credentials login.
-- Sessions use the default database-session strategy, persisted in the same Postgres (needs a `session`/`account`/`user` tables via Auth.js schema).
+- Sessions use the **JWT strategy** (not database sessions). Verified constraint in `@auth/core@0.41.3`: the credentials-provider path unconditionally encodes a JWT cookie and never calls `createSession`, so `strategy: 'database'` with credentials-only auth is unsupported (`UnsupportedStrategy` error). The `session`/`account`/`verificationTokens` tables exist for future OAuth/database-session support but are unused by the credentials flow. Trade-off: sessions are not server-side revocable; acceptable for a single admin.
 
 ### D4: Polymorphic attachments via entityType/entityId columns
 Notes and reminders carry `entityType` (enum of entity names or `none`) + nullable `entityId`. No join tables.
