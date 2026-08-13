@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { projectStatusEnum } from '@/db/schema';
+import { dateField } from './schemas-common';
 
 const projectStatuses = projectStatusEnum.enumValues;
 
@@ -10,20 +11,6 @@ const optionalId = z
   .string()
   .trim()
   .min(1)
-  .optional()
-  .or(z.literal(''))
-  .nullable();
-
-// Native <input type="date"> sends YYYY-MM-DD; parse at UTC midnight so the
-// server and client render the same business date (see formatDate in money.ts).
-const dateString = z
-  .string()
-  .trim()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a valid date')
-  .transform((value) => new Date(`${value}T00:00:00.000Z`));
-
-const optionalDate = z
-  .union([dateString, z.date()])
   .optional()
   .or(z.literal(''))
   .nullable();
@@ -46,11 +33,13 @@ const optionalBudgetAmount = z
 export const projectSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
   description: z.string().trim().optional().or(z.literal('')),
+  // Full-field update contract: the 5.7 edit form must always submit `status`
+  // (and every field) — an update that omits it falls back to 'planning'.
   status: z.enum(projectStatuses).default('planning'),
   clientId: optionalId,
   negotiationId: optionalId,
-  startDate: optionalDate,
-  endDate: optionalDate,
+  startDate: dateField,
+  endDate: dateField,
   budgetCurrency: optionalCurrency,
   budgetAmount: optionalBudgetAmount,
 });

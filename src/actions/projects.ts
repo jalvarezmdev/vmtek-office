@@ -147,6 +147,9 @@ export async function updateProjectAction(
     };
   }
 
+  // Full-field update: projectSchema defaults `status` to 'planning', so an
+  // update that omits it (or any field) resets that column. The 5.7 edit form
+  // must always submit every field, including `status`.
   const {
     name,
     description,
