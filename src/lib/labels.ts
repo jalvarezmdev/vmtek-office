@@ -106,7 +106,7 @@ export const paymentStatusLabel: Record<PaymentStatus, string> = {
 };
 
 export const paymentStatusVariant: Record<PaymentStatus, BadgeVariant> = {
-  pending: 'outline',
+  pending: 'destructive',
   partial: 'secondary',
   received: 'default',
 };
