@@ -1,9 +1,10 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
-import { db } from './index';
+import { getDb } from './index';
 import { users } from './schema';
 
 async function main() {
+  const db = getDb();
   const email = process.env.ADMIN_EMAIL;
   const password = process.env.ADMIN_PASSWORD;
 
