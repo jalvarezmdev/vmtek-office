@@ -47,7 +47,13 @@ export async function ActiveProjectsWidget({
                     </span>
                   ) : null}
                 </div>
-                <ProjectProgress done={done} total={total} />
+                {total === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    No milestones yet
+                  </p>
+                ) : (
+                  <ProjectProgress done={done} total={total} />
+                )}
               </li>
             );
           })}

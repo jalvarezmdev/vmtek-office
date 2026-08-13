@@ -2,13 +2,16 @@ import { ClipboardList } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DueDate } from '@/components/dashboard/due-date';
-import { sortByOverdueThenDue } from '@/components/dashboard/utils';
 import { EmptyState } from '@/components/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { WidgetCard } from '@/components/widget-card';
 import { getDb } from '@/db';
+import { taskPriorityEnum } from '@/db/schema';
+import { sortByOverdueThenDue } from '@/lib/dates';
 
-const priorityLabels: Record<string, string> = {
+type TaskPriority = (typeof taskPriorityEnum.enumValues)[number];
+
+const priorityLabels: Record<TaskPriority, string> = {
   low: 'Low',
   medium: 'Medium',
   high: 'High',
@@ -16,7 +19,7 @@ const priorityLabels: Record<string, string> = {
 };
 
 const priorityVariants: Record<
-  string,
+  TaskPriority,
   ComponentProps<typeof Badge>['variant']
 > = {
   low: 'outline',
@@ -41,9 +44,11 @@ export async function PendingTasksWidget({
         lte(t.dueDate, sevenDaysFromNow)
       ),
     with: { project: true },
+    orderBy: (t, { asc }) => [asc(t.dueDate)],
+    limit: 8,
   });
 
-  const sorted = sortByOverdueThenDue(tasks);
+  const sorted = sortByOverdueThenDue(tasks, (task) => task.dueDate);
 
   return (
     <WidgetCard
@@ -75,10 +80,10 @@ export async function PendingTasksWidget({
                 <DueDate date={task.dueDate} />
               </div>
               <Badge
-                variant={priorityVariants[task.priority] ?? 'outline'}
+                variant={priorityVariants[task.priority]}
                 className="shrink-0"
               >
-                {priorityLabels[task.priority] ?? task.priority}
+                {priorityLabels[task.priority]}
               </Badge>
             </li>
           ))}

@@ -1,8 +1,10 @@
+import { count, eq, sum } from 'drizzle-orm';
 import { Handshake } from 'lucide-react';
 
 import { EmptyState } from '@/components/empty-state';
 import { WidgetCard } from '@/components/widget-card';
 import { getDb } from '@/db';
+import { negotiations as negotiationsTable } from '@/db/schema';
 import { formatCompact, sumByCurrency } from '@/lib/money';
 
 export async function OpenNegotiationsWidget({
@@ -11,12 +13,23 @@ export async function OpenNegotiationsWidget({
   className?: string;
 }) {
   const db = await getDb();
-  const negotiations = await db.query.negotiations.findMany({
-    where: (n, { eq }) => eq(n.status, 'open'),
-  });
+  const [countResult, pipelineRows] = await Promise.all([
+    db
+      .select({ value: count() })
+      .from(negotiationsTable)
+      .where(eq(negotiationsTable.status, 'open')),
+    db
+      .select({
+        currency: negotiationsTable.currency,
+        total: sum(negotiationsTable.amount),
+      })
+      .from(negotiationsTable)
+      .where(eq(negotiationsTable.status, 'open'))
+      .groupBy(negotiationsTable.currency),
+  ]);
 
-  const count = negotiations.length;
-  const pipeline = sumByCurrency(negotiations, 'amount', 'currency');
+  const openCount = countResult[0]?.value ?? 0;
+  const pipeline = sumByCurrency(pipelineRows, 'total', 'currency');
 
   return (
     <WidgetCard
@@ -25,7 +38,7 @@ export async function OpenNegotiationsWidget({
       icon={Handshake}
       className={className}
     >
-      {count === 0 ? (
+      {openCount === 0 ? (
         <EmptyState
           title="No open negotiations"
           description="New opportunities will show up here."
@@ -34,9 +47,11 @@ export async function OpenNegotiationsWidget({
       ) : (
         <div className="space-y-3">
           <div className="flex items-end justify-between">
-            <span className="text-3xl font-semibold tabular-nums">{count}</span>
+            <span className="text-3xl font-semibold tabular-nums">
+              {openCount}
+            </span>
             <span className="text-sm text-muted-foreground">
-              {count === 1 ? 'open negotiation' : 'open negotiations'}
+              {openCount === 1 ? 'open negotiation' : 'open negotiations'}
             </span>
           </div>
           {pipeline.length > 0 ? (

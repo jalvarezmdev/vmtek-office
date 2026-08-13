@@ -1,10 +1,12 @@
+import { inArray, sum } from 'drizzle-orm';
 import { Banknote } from 'lucide-react';
 
 import { DueDate } from '@/components/dashboard/due-date';
-import { sortByOverdueThenDue } from '@/components/dashboard/utils';
 import { EmptyState } from '@/components/empty-state';
 import { WidgetCard } from '@/components/widget-card';
 import { getDb } from '@/db';
+import { payments as paymentsTable } from '@/db/schema';
+import { sortByOverdueThenDue } from '@/lib/dates';
 import { formatMoney, sumByCurrency } from '@/lib/money';
 
 export async function PendingPaymentsWidget({
@@ -13,13 +15,25 @@ export async function PendingPaymentsWidget({
   className?: string;
 }) {
   const db = await getDb();
-  const payments = await db.query.payments.findMany({
-    where: (p, { inArray }) => inArray(p.status, ['pending', 'partial']),
-    with: { project: true, client: true },
-  });
+  const [payments, outstanding] = await Promise.all([
+    db.query.payments.findMany({
+      where: (p, { inArray }) => inArray(p.status, ['pending', 'partial']),
+      with: { project: true, client: true },
+      orderBy: (p, { asc }) => [asc(p.dueDate)],
+      limit: 8,
+    }),
+    db
+      .select({
+        currency: paymentsTable.currency,
+        total: sum(paymentsTable.amount),
+      })
+      .from(paymentsTable)
+      .where(inArray(paymentsTable.status, ['pending', 'partial']))
+      .groupBy(paymentsTable.currency),
+  ]);
 
-  const sorted = sortByOverdueThenDue(payments);
-  const totals = sumByCurrency(payments, 'amount', 'currency');
+  const sorted = sortByOverdueThenDue(payments, (payment) => payment.dueDate);
+  const totals = sumByCurrency(outstanding, 'total', 'currency');
 
   return (
     <WidgetCard

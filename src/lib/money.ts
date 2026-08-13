@@ -118,6 +118,19 @@ export function formatDate(date: Date | string | null | undefined): string {
   return dateFormatter.format(parsed);
 }
 
+const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'UTC',
+});
+
+export function formatDateTime(date: Date | string | null | undefined): string {
+  if (!date) return '';
+  const parsed = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return dateTimeFormatter.format(parsed);
+}
+
 export function isOverdue(
   date: Date | string | null | undefined,
   now: Date = new Date()

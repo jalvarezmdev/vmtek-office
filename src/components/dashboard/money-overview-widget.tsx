@@ -1,12 +1,9 @@
 import { Wallet } from 'lucide-react';
 
-import {
-  startOfMonthUtc,
-  startOfNextMonthUtc,
-} from '@/components/dashboard/utils';
 import { EmptyState } from '@/components/empty-state';
 import { WidgetCard } from '@/components/widget-card';
 import { getDb } from '@/db';
+import { startOfMonthUtc, startOfNextMonthUtc } from '@/lib/dates';
 import { formatMoney, sumByCurrency } from '@/lib/money';
 import { cn } from '@/lib/utils';
 
