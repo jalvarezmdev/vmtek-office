@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 import { auth } from '@/auth';
 import { getDb } from '@/db';
-import { clients, payments, projects } from '@/db/schema';
+import { clients, payments, paymentStatusEnum, projects } from '@/db/schema';
 import { paymentSchema, type PaymentInput } from '@/lib/payment-schemas';
 
 const paymentIdSchema = z.string().min(1);
@@ -228,6 +228,74 @@ export async function deletePaymentAction(
     }
 
     return { success: true };
+  } catch (error) {
+    return failed(error);
+  }
+}
+
+const paymentStatusSchema = z.enum(paymentStatusEnum.enumValues);
+
+export async function setPaymentStatusAction(
+  id: string,
+  status: 'pending' | 'partial' | 'received'
+): Promise<PaymentActionResult> {
+  const session = await auth();
+  if (!session?.user) {
+    return unauthorized();
+  }
+
+  if (!paymentIdSchema.safeParse(id).success) {
+    return invalid();
+  }
+
+  const parsed = paymentStatusSchema.safeParse(status);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? 'Invalid status',
+    };
+  }
+
+  try {
+    const db = await getDb();
+
+    // Fetch first so we can record receivedDate on first receipt only. The
+    // transition to 'received' is idempotent: an already-received payment keeps
+    // its original receivedDate instead of overwriting it.
+    const payment = await db.query.payments.findFirst({
+      columns: { receivedDate: true },
+      where: eq(payments.id, id),
+    });
+
+    if (!payment) {
+      return { success: false, error: 'Payment not found' };
+    }
+
+    const set: { status: typeof parsed.data; receivedDate?: Date } = {
+      status: parsed.data,
+    };
+
+    if (parsed.data === 'received' && payment.receivedDate == null) {
+      set.receivedDate = new Date();
+    }
+
+    // receivedDate is left untouched when undoing to pending/partial: it records
+    // when the money first arrived, so clearing it would lose that history.
+    const result = await db
+      .update(payments)
+      .set(set)
+      .where(eq(payments.id, id));
+
+    revalidatePath('/payments');
+    revalidatePath('/clients');
+    revalidatePath('/projects');
+    revalidatePath('/');
+
+    if (result.rowCount === 0) {
+      return { success: false, error: 'Payment not found' };
+    }
+
+    return { success: true, id };
   } catch (error) {
     return failed(error);
   }
