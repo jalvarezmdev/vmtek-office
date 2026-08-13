@@ -2,7 +2,7 @@
 
 import { AuthError, CredentialsSignin } from 'next-auth';
 
-import { signIn } from '@/auth';
+import { signIn, signOut } from '@/auth';
 import { loginSchema } from '@/lib/auth-schemas';
 
 export type LoginState = { error?: string } | null;
@@ -46,4 +46,8 @@ export async function loginAction(
 
   // signIn redirects on success (NEXT_REDIRECT thrown); unreachable at runtime, needed for types
   return null;
+}
+
+export async function signOutAction() {
+  await signOut({ redirectTo: '/login' });
 }
