@@ -20,11 +20,19 @@ export async function loginAction(
     return { error: 'Please check your email and password.' };
   }
 
+  const rawCallbackUrl = formData.get('callbackUrl');
+  const callbackUrl =
+    typeof rawCallbackUrl === 'string' &&
+    rawCallbackUrl.startsWith('/') &&
+    !rawCallbackUrl.startsWith('//')
+      ? rawCallbackUrl
+      : '/';
+
   try {
     await signIn('credentials', {
       email: parsed.data.email,
       password: parsed.data.password,
-      redirectTo: '/',
+      redirectTo: callbackUrl,
     });
   } catch (error) {
     if (error instanceof CredentialsSignin) {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import { loginAction, type LoginState } from '@/actions/auth';
 import { Button } from '@/components/ui/button';
@@ -13,10 +14,20 @@ export function LoginForm() {
     null
   );
 
+  const searchParams = useSearchParams();
+  const rawCallbackUrl = searchParams.get('callbackUrl');
+  const callbackUrl =
+    rawCallbackUrl &&
+    rawCallbackUrl.startsWith('/') &&
+    !rawCallbackUrl.startsWith('//')
+      ? rawCallbackUrl
+      : '/';
+
   const hasError = Boolean(state?.error);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      <input type="hidden" name="callbackUrl" value={callbackUrl} />
       <div className="flex flex-col gap-2">
         <Label htmlFor="email">Email</Label>
         <Input
