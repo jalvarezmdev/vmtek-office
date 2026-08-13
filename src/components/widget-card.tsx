@@ -38,7 +38,13 @@ export function WidgetCard({
               <Icon aria-hidden="true" className="size-4" />
             </span>
           ) : null}
-          <CardTitle className="truncate">{title}</CardTitle>
+          {href ? (
+            <Link href={href} className="truncate">
+              <CardTitle className="truncate">{title}</CardTitle>
+            </Link>
+          ) : (
+            <CardTitle className="truncate">{title}</CardTitle>
+          )}
         </div>
         {href ? (
           <CardAction>

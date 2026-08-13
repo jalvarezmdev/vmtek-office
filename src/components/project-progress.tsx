@@ -12,8 +12,10 @@ export function ProjectProgress({
   total,
   className,
 }: ProjectProgressProps) {
-  const percentage =
-    total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
+  const percentage = Math.max(
+    0,
+    Math.min(100, total > 0 ? Math.round((done / total) * 100) : 0)
+  );
 
   return (
     <div className={cn('space-y-1.5', className)}>
