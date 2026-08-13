@@ -2,12 +2,16 @@ import type { ComponentProps } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import {
+  epicStatusEnum,
   expenseCategoryEnum,
+  milestoneStatusEnum,
   negotiationStatusEnum,
   paymentStatusEnum,
   projectStatusEnum,
   reminderRepeatEnum,
   reminderStatusEnum,
+  taskPriorityEnum,
+  taskStatusEnum,
 } from '@/db/schema';
 
 export type BadgeVariant = ComponentProps<typeof Badge>['variant'];
@@ -15,6 +19,10 @@ export type BadgeVariant = ComponentProps<typeof Badge>['variant'];
 export type ProjectStatus = (typeof projectStatusEnum.enumValues)[number];
 export type NegotiationStatus =
   (typeof negotiationStatusEnum.enumValues)[number];
+export type MilestoneStatus = (typeof milestoneStatusEnum.enumValues)[number];
+export type EpicStatus = (typeof epicStatusEnum.enumValues)[number];
+export type TaskStatus = (typeof taskStatusEnum.enumValues)[number];
+export type TaskPriority = (typeof taskPriorityEnum.enumValues)[number];
 export type PaymentStatus = (typeof paymentStatusEnum.enumValues)[number];
 export type ExpenseCategory = (typeof expenseCategoryEnum.enumValues)[number];
 export type ReminderStatus = (typeof reminderStatusEnum.enumValues)[number];
@@ -48,6 +56,48 @@ export const negotiationStatusVariant: Record<NegotiationStatus, BadgeVariant> =
     won: 'secondary',
     lost: 'destructive',
   };
+
+export const milestoneStatusLabel: Record<MilestoneStatus, string> = {
+  planned: 'Planned',
+  active: 'Active',
+  done: 'Done',
+};
+
+export const milestoneStatusVariant: Record<MilestoneStatus, BadgeVariant> = {
+  planned: 'outline',
+  active: 'default',
+  done: 'secondary',
+};
+
+export const epicStatusLabel: Record<EpicStatus, string> = milestoneStatusLabel;
+export const epicStatusVariant: Record<EpicStatus, BadgeVariant> =
+  milestoneStatusVariant;
+
+export const taskStatusLabel: Record<TaskStatus, string> = {
+  todo: 'To do',
+  in_progress: 'In progress',
+  done: 'Done',
+};
+
+export const taskStatusVariant: Record<TaskStatus, BadgeVariant> = {
+  todo: 'outline',
+  in_progress: 'secondary',
+  done: 'default',
+};
+
+export const taskPriorityLabel: Record<TaskPriority, string> = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  urgent: 'Urgent',
+};
+
+export const taskPriorityVariant: Record<TaskPriority, BadgeVariant> = {
+  low: 'outline',
+  medium: 'secondary',
+  high: 'default',
+  urgent: 'destructive',
+};
 
 export const paymentStatusLabel: Record<PaymentStatus, string> = {
   pending: 'Pending',

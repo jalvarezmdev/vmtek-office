@@ -2,9 +2,10 @@ import type { InferSelectModel } from 'drizzle-orm';
 import { Users } from 'lucide-react';
 
 import { EmptyState } from '@/components/empty-state';
+import { MoneyList } from '@/components/money-list';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { negotiations, payments, projects } from '@/db/schema';
-import { formatMoney, sumByCurrency } from '@/lib/money';
+import { sumByCurrency } from '@/lib/money';
 
 export type OverviewTabProps = {
   email: string | null;
@@ -107,22 +108,5 @@ export function OverviewTab({
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function MoneyList({
-  rows,
-}: {
-  rows: Array<{ currency: string; total: number }>;
-}) {
-  if (rows.length === 0) {
-    return <span className="text-muted-foreground">—</span>;
-  }
-  return (
-    <span className="inline-flex flex-col items-end gap-0.5">
-      {rows.map(({ currency, total }) => (
-        <span key={currency}>{formatMoney(total, currency)}</span>
-      ))}
-    </span>
   );
 }
