@@ -35,10 +35,10 @@ export async function PendingTasksWidget({
   const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   const tasks = await db.query.tasks.findMany({
-    where: (t, { and, inArray, isNull, lte, or }) =>
+    where: (t, { and, inArray, lte }) =>
       and(
         inArray(t.status, ['todo', 'in_progress']),
-        or(isNull(t.dueDate), lte(t.dueDate, sevenDaysFromNow))
+        lte(t.dueDate, sevenDaysFromNow)
       ),
     with: { project: true },
   });
