@@ -136,7 +136,7 @@ export function OverviewTab({
               <dd>
                 {project.negotiation ? (
                   <Link
-                    href={`/negotiations/${project.negotiation.id}`}
+                    href="/negotiations"
                     className="font-medium hover:underline"
                   >
                     {project.negotiation.title}

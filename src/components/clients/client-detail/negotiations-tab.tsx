@@ -47,7 +47,7 @@ export function NegotiationsTab({
                 <TableRow key={negotiation.id}>
                   <TableCell>
                     <Link
-                      href={`/negotiations/${negotiation.id}`}
+                      href="/negotiations"
                       className="font-medium hover:underline"
                     >
                       {negotiation.title}
