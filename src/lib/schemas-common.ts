@@ -38,3 +38,15 @@ export const dateField = z
   });
 
 export type DateField = z.infer<typeof dateField>;
+
+// Required variant of dateField: a calendar date must always be present. Used
+// by fields the spec makes mandatory (expense.date), which must not accept
+// ''/null/undefined. Shares the same YYYY-MM-DD and Date parsing as dateField.
+export const requiredDateField = z
+  .union([dateInstance, dateString])
+  .transform((value): Date => {
+    if (value instanceof Date) return value;
+    return new Date(`${value}T00:00:00.000Z`);
+  });
+
+export type RequiredDateField = z.infer<typeof requiredDateField>;
