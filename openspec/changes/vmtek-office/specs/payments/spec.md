@@ -42,8 +42,8 @@ The system SHALL display all payments with status, amount, currency, due date, a
 - **THEN** the system shows all payments with status, amount, currency, and due date
 
 #### Scenario: Filter by status
-- **WHEN** the admin filters payments by pending
-- **THEN** the system shows only pending and partial payments
+- **WHEN** the admin filters payments by a status (pending, partial, or received)
+- **THEN** the system shows only payments in that exact status; the outstanding (pending + partial) combined figure is shown in the page header banner
 
 ### Requirement: Pending payments visibility
 The system SHALL surface pending and partial payments (money still owed to VMWTEK) with their due dates, sorted by overdue first.
