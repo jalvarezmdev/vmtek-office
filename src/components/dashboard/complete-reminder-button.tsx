@@ -16,7 +16,11 @@ export function CompleteReminderButton({ reminderId }: { reminderId: string }) {
         startTransition(async () => {
           const result = await completeReminderAction(reminderId);
           if (result.success) {
-            toast.success('Reminder completed');
+            toast.success(
+              result.nextId
+                ? 'Reminder completed — next occurrence scheduled'
+                : 'Reminder completed'
+            );
           } else {
             toast.error('Could not complete the reminder');
           }

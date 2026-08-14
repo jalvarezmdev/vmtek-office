@@ -17,6 +17,7 @@ import {
   tasks,
 } from '@/db/schema';
 import { getTimezone, toUtcDate } from '@/lib/dates';
+import { nextDueAt } from '@/lib/reminder-repeat';
 import { reminderSchema, type ReminderInput } from '@/lib/reminder-schemas';
 
 const reminderIdSchema = z.string().min(1);
@@ -108,7 +109,12 @@ async function resolveDueAt(dueAt: Date | string): Promise<Date> {
   return toUtcDate(dueAt, await getTimezone());
 }
 
-export type CompleteReminderResult = { success: boolean };
+export type CompleteReminderResult = {
+  success: boolean;
+  error?: string;
+  id?: string;
+  nextId?: string;
+};
 
 export async function completeReminderAction(
   id: string
@@ -122,16 +128,63 @@ export async function completeReminderAction(
     return { success: false };
   }
 
-  const db = await getDb();
-  const result = await db
-    .update(reminders)
-    .set({ status: 'done' })
-    .where(and(eq(reminders.id, id), eq(reminders.status, 'pending')));
+  try {
+    const db = await getDb();
 
-  revalidatePath('/');
-  revalidatePath('/reminders');
+    const [reminder] = await db
+      .select({
+        title: reminders.title,
+        notes: reminders.notes,
+        dueAt: reminders.dueAt,
+        repeat: reminders.repeat,
+        entityType: reminders.entityType,
+        entityId: reminders.entityId,
+      })
+      .from(reminders)
+      .where(and(eq(reminders.id, id), eq(reminders.status, 'pending')))
+      .limit(1);
 
-  return { success: result.rowCount > 0 };
+    if (!reminder) {
+      return { success: false };
+    }
+
+    const result = await db
+      .update(reminders)
+      .set({ status: 'done' })
+      .where(and(eq(reminders.id, id), eq(reminders.status, 'pending')));
+
+    if (result.rowCount === 0) {
+      return { success: false };
+    }
+
+    // The neon-http driver does not support db.transaction() (it throws), so
+    // the completion and the next occurrence run as two separate statements.
+    // A failure between them leaves the original done without a next
+    // occurrence — a tiny, accepted non-atomic window.
+    let nextId: string | undefined;
+    const nextDue = nextDueAt(reminder.dueAt, reminder.repeat);
+    if (nextDue) {
+      const [row] = await db
+        .insert(reminders)
+        .values({
+          title: reminder.title,
+          notes: reminder.notes,
+          dueAt: nextDue,
+          status: 'pending',
+          repeat: reminder.repeat,
+          entityType: reminder.entityType,
+          entityId: reminder.entityId,
+        })
+        .returning({ id: reminders.id });
+      nextId = row.id;
+    }
+
+    revalidateReminderPaths();
+
+    return { success: true, id, nextId };
+  } catch (error) {
+    return failed(error);
+  }
 }
 
 export async function dismissReminderAction(
