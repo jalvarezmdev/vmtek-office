@@ -136,7 +136,7 @@ export default async function ClientDetailPage({
         </TabsContent>
 
         <TabsContent value="notes">
-          <NotesTab notes={notes} />
+          <NotesTab notes={notes} entityId={id} />
         </TabsContent>
 
         <TabsContent value="reminders">

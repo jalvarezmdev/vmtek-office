@@ -235,7 +235,7 @@ export default async function ProjectDetailPage({
         </TabsContent>
 
         <TabsContent value="notes">
-          <NotesTab notes={notes} />
+          <NotesTab notes={notes} entityId={id} />
         </TabsContent>
 
         <TabsContent value="reminders">

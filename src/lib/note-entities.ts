@@ -17,3 +17,17 @@ export type NoteEntityOptions = {
   epics: NoteEntityOption[];
   reminders: NoteEntityOption[];
 };
+
+// For fixed-entity note forms (e.g. detail tabs) the entity pickers are
+// hidden, so no lookup lists are needed.
+export const emptyNoteEntityOptions: NoteEntityOptions = {
+  clients: [],
+  projects: [],
+  tasks: [],
+  negotiations: [],
+  payments: [],
+  expenses: [],
+  milestones: [],
+  epics: [],
+  reminders: [],
+};

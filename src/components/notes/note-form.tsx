@@ -30,10 +30,18 @@ import { noteSchema, type NoteInput } from '@/lib/note-schemas';
 
 const entityTypes = noteEntityEnum.enumValues;
 
+// When set, the note is hard-linked to a single entity and the entity pickers
+// are hidden (used by entity detail tabs where the target is known up front).
+export type FixedNoteEntity = {
+  entityType: Exclude<NoteEntityType, 'none'>;
+  entityId: string;
+};
+
 type NoteFormProps = {
   mode?: 'create' | 'edit';
   noteId?: string;
   entityOptions: NoteEntityOptions;
+  fixedEntity?: FixedNoteEntity;
   defaultValues?: Partial<NoteInput>;
   onSuccess?: () => void;
 };
@@ -42,6 +50,7 @@ export function NoteForm({
   mode = 'create',
   noteId,
   entityOptions,
+  fixedEntity,
   defaultValues,
   onSuccess,
 }: NoteFormProps) {
@@ -52,9 +61,11 @@ export function NoteForm({
   const isEdit = mode === 'edit' && noteId !== undefined;
 
   const [entityType, setEntityType] = useState<NoteEntityType>(
-    defaultValues?.entityType ?? 'none'
+    fixedEntity?.entityType ?? defaultValues?.entityType ?? 'none'
   );
-  const [entityId, setEntityId] = useState(defaultValues?.entityId ?? '');
+  const [entityId, setEntityId] = useState(
+    fixedEntity?.entityId ?? defaultValues?.entityId ?? ''
+  );
 
   const optionsByType: Record<
     Exclude<NoteEntityType, 'none'>,
@@ -123,28 +134,30 @@ export function NoteForm({
             disabled={pending}
           />
         </div>
-        <div className="flex flex-col gap-2">
-          <Label>Attach to</Label>
-          <Select
-            value={entityType}
-            onValueChange={(next) => {
-              setEntityType(next as NoteEntityType);
-              setEntityId('');
-            }}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {entityTypes.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {noteEntityLabel[type]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {entityType !== 'none' ? (
+        {!fixedEntity ? (
+          <div className="flex flex-col gap-2">
+            <Label>Attach to</Label>
+            <Select
+              value={entityType}
+              onValueChange={(next) => {
+                setEntityType(next as NoteEntityType);
+                setEntityId('');
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {entityTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {noteEntityLabel[type]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+        {!fixedEntity && entityType !== 'none' ? (
           <div className="flex flex-col gap-2">
             <Label>{noteEntityLabel[entityType]}</Label>
             <Select value={entityId} onValueChange={setEntityId}>

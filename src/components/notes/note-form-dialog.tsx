@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 
-import { NoteForm } from '@/components/notes/note-form';
+import { NoteForm, type FixedNoteEntity } from '@/components/notes/note-form';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,6 +21,8 @@ type NoteFormDialogProps = {
   mode?: 'create' | 'edit';
   noteId?: string;
   defaultValues?: Partial<NoteInput>;
+  fixedEntity?: FixedNoteEntity;
+  triggerLabel?: string;
   // Edit mode renders without a trigger button, so the parent controls open.
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -32,6 +34,8 @@ export function NoteFormDialog({
   mode = 'create',
   noteId,
   defaultValues,
+  fixedEntity,
+  triggerLabel,
   open,
   onOpenChange,
   onSuccess,
@@ -48,7 +52,7 @@ export function NoteFormDialog({
         <DialogTrigger asChild>
           <Button>
             <Plus data-icon="inline-start" aria-hidden="true" />
-            New note
+            {triggerLabel ?? 'New note'}
           </Button>
         </DialogTrigger>
       ) : null}
@@ -65,6 +69,7 @@ export function NoteFormDialog({
           mode={mode}
           noteId={noteId}
           entityOptions={entityOptions}
+          fixedEntity={fixedEntity}
           defaultValues={defaultValues}
           onSuccess={() => {
             setOpen(false);
