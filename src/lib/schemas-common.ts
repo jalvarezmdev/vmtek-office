@@ -57,6 +57,7 @@ const datetimeLocal = z
   .refine(
     (value) => {
       const [datePart, timePart] = value.split('T');
+      if (!datePart || !timePart) return false;
       const [year, month, day] = datePart.split('-').map(Number);
       const [hour, minute] = timePart.split(':').map(Number);
       const date = new Date(year, month - 1, day, hour, minute);
