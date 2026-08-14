@@ -77,7 +77,7 @@
 ## 10. Notes
 
 - [ ] 10.1 Implement note CRUD actions (body required, polymorphic entityType/entityId)
-- [ ] 10.2 Build the notes index page (searchable, grouped by entity type)
+- [x] 10.2 Build the notes index page (searchable, grouped by entity type)
 - [ ] 10.3 Add note forms to entity detail tabs (client, project, task, negotiation, payment, expense, milestone, epic, reminder)
 - [ ] 10.4 Verify note scenarios (standalone, on-entity, edit, delete, search)
 
