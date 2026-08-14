@@ -14,6 +14,7 @@ import {
   taskPriorityEnum,
   taskStatusEnum,
 } from '@/db/schema';
+import type { NoteEntityType } from '@/lib/note-entities';
 
 export type BadgeVariant = ComponentProps<typeof Badge>['variant'];
 
@@ -147,4 +148,17 @@ export const reminderRepeatLabel: Record<ReminderRepeat, string> = {
   daily: 'Daily',
   weekly: 'Weekly',
   monthly: 'Monthly',
+};
+
+export const noteEntityLabel: Record<NoteEntityType, string> = {
+  none: 'Standalone',
+  client: 'Client',
+  project: 'Project',
+  task: 'Task',
+  negotiation: 'Negotiation',
+  payment: 'Payment',
+  expense: 'Expense',
+  milestone: 'Milestone',
+  epic: 'Epic',
+  reminder: 'Reminder',
 };

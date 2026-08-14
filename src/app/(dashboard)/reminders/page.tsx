@@ -1,5 +1,4 @@
 import type { InferSelectModel } from 'drizzle-orm';
-import { inArray } from 'drizzle-orm';
 import { formatInTimeZone } from 'date-fns-tz';
 import { Bell } from 'lucide-react';
 import type { Metadata } from 'next';
@@ -12,20 +11,10 @@ import {
 } from '@/components/reminders/reminders-table';
 import { Card, CardContent } from '@/components/ui/card';
 import { getDb } from '@/db';
-import {
-  clients,
-  milestones,
-  negotiations,
-  payments,
-  projects,
-  reminders,
-  tasks,
-} from '@/db/schema';
+import { reminders } from '@/db/schema';
 import { getTimezone, startOfNextLocalDay } from '@/lib/dates';
-import type {
-  ReminderEntityOptions,
-  ReminderEntityType,
-} from '@/lib/reminder-entities';
+import { buildEntityContexts, entityHrefs } from '@/lib/entity-labels';
+import type { ReminderEntityOptions } from '@/lib/reminder-entities';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
@@ -85,101 +74,6 @@ function groupReminders(
     // Ascending due order from the query; newest due last-completed first.
     past: past.reverse(),
   };
-}
-
-async function fetchEntityLabels(
-  db: ReturnType<typeof getDb>,
-  type: ReminderEntityType,
-  ids: string[]
-): Promise<Map<string, string>> {
-  switch (type) {
-    case 'client': {
-      const rows = await db.query.clients.findMany({
-        columns: { id: true, name: true },
-        where: inArray(clients.id, ids),
-      });
-      return new Map(rows.map((row) => [row.id, row.name]));
-    }
-    case 'project': {
-      const rows = await db.query.projects.findMany({
-        columns: { id: true, name: true },
-        where: inArray(projects.id, ids),
-      });
-      return new Map(rows.map((row) => [row.id, row.name]));
-    }
-    case 'task': {
-      const rows = await db.query.tasks.findMany({
-        columns: { id: true, title: true },
-        where: inArray(tasks.id, ids),
-      });
-      return new Map(rows.map((row) => [row.id, row.title]));
-    }
-    case 'payment': {
-      const rows = await db.query.payments.findMany({
-        columns: { id: true, description: true },
-        where: inArray(payments.id, ids),
-      });
-      return new Map(rows.map((row) => [row.id, row.description ?? 'Payment']));
-    }
-    case 'negotiation': {
-      const rows = await db.query.negotiations.findMany({
-        columns: { id: true, title: true },
-        where: inArray(negotiations.id, ids),
-      });
-      return new Map(rows.map((row) => [row.id, row.title]));
-    }
-    case 'milestone': {
-      const rows = await db.query.milestones.findMany({
-        columns: { id: true, name: true },
-        where: inArray(milestones.id, ids),
-      });
-      return new Map(rows.map((row) => [row.id, row.name]));
-    }
-    default:
-      return new Map();
-  }
-}
-
-// Batch-resolves the display name of every linked entity with one query per
-// entity type (no per-row round trips).
-async function buildEntityContexts(
-  db: ReturnType<typeof getDb>,
-  rows: ReminderRow[]
-): Promise<Record<string, ReminderEntityContext | null>> {
-  const idsByType = new Map<ReminderEntityType, Set<string>>();
-  for (const row of rows) {
-    if (row.entityType === 'none' || !row.entityId) continue;
-    const ids = idsByType.get(row.entityType) ?? new Set<string>();
-    ids.add(row.entityId);
-    idsByType.set(row.entityType, ids);
-  }
-
-  const labelMaps = await Promise.all(
-    [...idsByType.entries()].map(([type, ids]) =>
-      fetchEntityLabels(db, type, [...ids]).then((labels) => ({ type, labels }))
-    )
-  );
-
-  const contexts: Record<string, ReminderEntityContext | null> = {};
-  for (const row of rows) {
-    if (row.entityType === 'none' || !row.entityId) {
-      contexts[row.id] = null;
-      continue;
-    }
-    const entry = labelMaps.find(({ type }) => type === row.entityType);
-    const label = entry?.labels.get(row.entityId);
-    contexts[row.id] = label
-      ? {
-          label,
-          href:
-            row.entityType === 'client' || row.entityType === 'project'
-              ? `/${row.entityType}s/${row.entityId}`
-              : undefined,
-        }
-      : null;
-  }
-
-  return contexts;
 }
 
 export default async function RemindersPage() {
@@ -248,7 +142,7 @@ export default async function RemindersPage() {
     })),
   };
 
-  const contexts = await buildEntityContexts(db, reminderRows);
+  const contexts = await buildEntityContexts(db, reminderRows, entityHrefs);
   const groups = groupReminders(reminderRows, new Date(), timeZone);
 
   const hasReminders = reminderRows.length > 0;
