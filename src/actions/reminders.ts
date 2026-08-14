@@ -6,23 +6,13 @@ import { z } from 'zod';
 
 import { auth } from '@/auth';
 import { getDb } from '@/db';
-import {
-  clients,
-  milestones,
-  negotiations,
-  payments,
-  projects,
-  reminderEntityEnum,
-  reminders,
-  tasks,
-} from '@/db/schema';
+import { reminders } from '@/db/schema';
 import { getTimezone, toUtcDate } from '@/lib/dates';
+import { linkedEntityExists } from '@/lib/entity-exists';
 import { nextDueAt } from '@/lib/reminder-repeat';
 import { reminderSchema, type ReminderInput } from '@/lib/reminder-schemas';
 
 const reminderIdSchema = z.string().min(1);
-
-type ReminderEntity = (typeof reminderEntityEnum.enumValues)[number];
 
 export type ReminderActionResult = {
   success: boolean;
@@ -56,54 +46,8 @@ function revalidateReminderPaths(): void {
 }
 
 // Design D4: reminders link polymorphically (entityType + entityId, no FK).
-// Integrity is enforced here — a linked entity must actually exist.
-async function linkedEntityExists(
-  db: ReturnType<typeof getDb>,
-  entityType: ReminderEntity,
-  entityId: string
-): Promise<boolean> {
-  if (entityType === 'none') return true;
-  let found: { id: string } | undefined;
-  switch (entityType) {
-    case 'client':
-      found = await db.query.clients.findFirst({
-        columns: { id: true },
-        where: eq(clients.id, entityId),
-      });
-      break;
-    case 'project':
-      found = await db.query.projects.findFirst({
-        columns: { id: true },
-        where: eq(projects.id, entityId),
-      });
-      break;
-    case 'task':
-      found = await db.query.tasks.findFirst({
-        columns: { id: true },
-        where: eq(tasks.id, entityId),
-      });
-      break;
-    case 'payment':
-      found = await db.query.payments.findFirst({
-        columns: { id: true },
-        where: eq(payments.id, entityId),
-      });
-      break;
-    case 'negotiation':
-      found = await db.query.negotiations.findFirst({
-        columns: { id: true },
-        where: eq(negotiations.id, entityId),
-      });
-      break;
-    case 'milestone':
-      found = await db.query.milestones.findFirst({
-        columns: { id: true },
-        where: eq(milestones.id, entityId),
-      });
-      break;
-  }
-  return Boolean(found);
-}
+// Integrity is enforced here — a linked entity must actually exist. The
+// existence check is shared with the notes actions (see src/lib/entity-exists).
 
 async function resolveDueAt(dueAt: Date | string): Promise<Date> {
   return toUtcDate(dueAt, await getTimezone());
