@@ -56,6 +56,21 @@ export function startOfNextMonthUtc(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1));
 }
 
+/**
+ * Converts a local datetime string ('YYYY-MM-DDTHH:mm', the format produced by
+ * <input type="datetime-local">) to the UTC instant it represents in the admin's
+ * time zone. A Date input is already an absolute instant and is returned as-is.
+ * Throws for strings that fail to parse.
+ */
+export function toUtcDate(value: Date | string, timeZone: string): Date {
+  if (value instanceof Date) return value;
+  const utc = fromZonedTime(value, timeZone);
+  if (Number.isNaN(utc.getTime())) {
+    throw new Error(`Invalid datetime string: ${value}`);
+  }
+  return utc;
+}
+
 export function sortByOverdueThenDue<T>(
   rows: T[],
   getDue: (row: T) => Date | null | undefined

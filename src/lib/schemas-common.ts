@@ -50,3 +50,33 @@ export const requiredDateField = z
   });
 
 export type RequiredDateField = z.infer<typeof requiredDateField>;
+
+const datetimeLocal = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Enter a valid date and time')
+  .refine(
+    (value) => {
+      const [datePart, timePart] = value.split('T');
+      const [year, month, day] = datePart.split('-').map(Number);
+      const [hour, minute] = timePart.split(':').map(Number);
+      const date = new Date(year, month - 1, day, hour, minute);
+      return (
+        !Number.isNaN(date.getTime()) &&
+        date.getFullYear() === year &&
+        date.getMonth() === month - 1 &&
+        date.getDate() === day &&
+        date.getHours() === hour &&
+        date.getMinutes() === minute
+      );
+    },
+    { message: 'Enter a valid date and time' }
+  );
+
+// A local datetime in the form produced by <input type="datetime-local">
+// ('YYYY-MM-DDTHH:mm') or a Date. Unlike dateField, the string is NOT converted
+// to a Date here: a local datetime means a different UTC instant per admin
+// timezone, which the server action resolves via getTimezone + toUtcDate.
+// Required — reminders must always have a due datetime.
+export const datetimeInput = z.union([dateInstance, datetimeLocal]);
+
+export type DatetimeInput = z.infer<typeof datetimeInput>;
