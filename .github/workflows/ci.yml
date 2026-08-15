@@ -38,10 +38,18 @@ jobs:
       - name: Format check
         run: pnpm format:check
 
+      - name: Test
+        run: pnpm test
+
       - name: Build
         run: pnpm build
 
-      # Test step placeholder: Vitest/Playwright will be added in group 12
-      # (tasks 12.1-12.4). When a `pnpm test` script exists, add:
-      #   - name: Test
-      #     run: pnpm test
+      # E2E (Playwright) is intentionally not enabled in CI yet: it needs the
+      # Neon dev DB and a DATABASE_URL secret (GitHub secrets not configured,
+      # see Task 13). The Vitest suite above runs without secrets — the 6 DB
+      # integration tests skip when DATABASE_URL is absent, keeping CI green.
+      # When secrets exist, add:
+      #   - name: E2E
+      #     run: |
+      #       pnpm exec playwright install --with-deps chromium
+      #       pnpm test:e2e
