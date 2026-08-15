@@ -7,7 +7,12 @@ import { z } from 'zod';
 import { createProjectAction } from '@/actions/projects';
 import { auth } from '@/auth';
 import { getDb } from '@/db';
-import { clients, negotiations, negotiationStatusEnum } from '@/db/schema';
+import {
+  clients,
+  negotiations,
+  negotiationStatusEnum,
+  projects,
+} from '@/db/schema';
 import {
   negotiationSchema,
   type NegotiationInput,
@@ -279,6 +284,17 @@ export async function convertNegotiationToProjectAction(
       return {
         success: false,
         error: 'Only won negotiations can be converted to projects',
+      };
+    }
+
+    const existing = await db.query.projects.findFirst({
+      columns: { id: true },
+      where: eq(projects.negotiationId, negotiationId),
+    });
+    if (existing) {
+      return {
+        success: false,
+        error: 'A project already exists for this negotiation',
       };
     }
 
