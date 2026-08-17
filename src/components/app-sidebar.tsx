@@ -27,7 +27,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
 
 type NavItem = {
   title: string;
@@ -54,6 +56,7 @@ function isActive(pathname: string, href: string) {
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { open } = useSidebar();
 
   return (
     <Sidebar collapsible="icon">
@@ -61,11 +64,8 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
-                <div className="flex size-7 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <LayoutDashboard aria-hidden="true" />
-                </div>
-                <span className="truncate font-semibold">VMWTEK Office</span>
+              <Link href="/" className={cn(open ? "justify-start" : "justify-center")}>
+                <span className="truncate font-semibold">{ open ? "VMWTEK Office" : "VM" }</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
