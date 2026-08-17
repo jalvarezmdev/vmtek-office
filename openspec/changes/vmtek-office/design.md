@@ -40,7 +40,7 @@ Notes and reminders carry `entityType` (enum of entity names or `none`) + nullab
 - Trade-off: no FK enforcement on polymorphic links — integrity is enforced in server-action validation and application code. Acceptable for a single-admin app; a composite key per entity was the rejected alternative (table explosion, YAGNI).
 
 ### D5: Money records use flexible optional FKs
-`payments` and `expenses` have nullable `clientId`/`projectId` (payments also `milestoneId`). Neither set = general income/overhead. Validation requires amount + currency; at most one of the links is expected to be primary, enforced in actions.
+`payments` and `expenses` have nullable `clientId`/`projectId`. Neither set = general income/overhead. Validation requires amount + currency; the payment actions check that linked entities exist but allow both `clientId` and `projectId` to be set together.
 - Rationale: user decision "mixed" — money can attach to project, client, or neither, and projects may lack clients.
 - Projects have nullable `clientId` and nullable `negotiationId` (born from won negotiation).
 
